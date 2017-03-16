@@ -44,14 +44,15 @@ p @word_dict.size
 p word_to_binary(@words.first)
 
 nn = Brains::Net.create(15, 15, 2, { neurons_per_layer: 15,
-      learning_rate: 0.5,
+      momentum: 0,
+      learning_rate: 0.01,
       recurrent: true,
-      output_function: :sigmoid,
-      error: :cross_entropy
+      output_function: :softmax,
+      error: :cross_entropy,
      })
 
+nn.randomize_weights
 # train on corpus
-
 
 input = @words.collect { |w|  word_to_binary(w) }
 expected_output = @words.rotate.collect { |w|  word_to_binary(w) }
@@ -60,7 +61,7 @@ training_data = [[input, expected_output]]
 
 p training_data
 
-result = nn.optimize_recurrent(training_data, 0.01, 100_000_000, 10) { |i, error|
+result = nn.optimize_recurrent(training_data, 0.01, 100_000_000, 100_000, 6) { |i, error|
   puts "#{i} #{error}"
 }
 
@@ -70,12 +71,12 @@ p @word_dict
 input  = @words[1]
 
 sentence = (1..10).collect do
-  puts input
   r = nn.feed(word_to_binary(input))
-  puts r
   output = onehot_to_word(r)
   input = output
   output
 end.join(' ')
 
 puts sentence
+
+puts nn.to_json
